@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            color: #555;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        #results {
+            display: none;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        p {
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Tax Calculator</h1>
+        <form id="taxForm">
+            <label for="salary">Enter your salary:</label>
+            <input type="text" id="salary" name="salary" required>
+            <label for="deduction">Enter your deduction (for old regime):</label>
+            <input type="text" id="deduction" name="deduction" required>
+            <button type="submit">Calculate</button>
+        </form>
+        <div id="results">
+            <h2>Results</h2>
+            <p id="netTaxableIncomeNew"></p>
+            <p id="netTaxableIncomeOld"></p>
+            <p id="taxNew"></p>
+            <p id="taxOld"></p>
+            <h3 id="betterResult"></h3>
+        </div>
+    </div>
+    <script>
+        document.getElementById('taxForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const salary = parseInt(document.getElementById('salary').value.replace(/,/g, ''));
+            const deduction = parseInt(document.getElementById('deduction').value.replace(/,/g, ''));
+
+            const exemptionOld = 50000;
+            const exemptionNew = 75000;
+
+            const salOld = salary - exemptionOld;
+            const salNew = salary - exemptionNew;
+
+            const results = calculate(salOld, salNew, deduction);
+            const betterResult = betterCalculate(salOld, salNew);
+
+            document.getElementById('netTaxableIncomeNew').innerText = "Net taxable income (New Regime): " + results.netTaxableIncomeNew;
+            document.getElementById('netTaxableIncomeOld').innerText = "Net taxable income (Old Regime): " + results.netTaxableIncomeOld;
+            document.getElementById('taxNew').innerText = "Tax in New Regime: " + results.taxNew;
+            document.getElementById('taxOld').innerText = "Tax in Old Regime: " + results.taxOld;
+            document.getElementById('betterResult').innerText = betterResult;
+
+            document.getElementById('results').style.display = 'block';
+        });
+
+        function oldSlab(salary) {
+            let tax = 0;
+            if (salary <= 500000) {
+                tax = 0;
+            } else if (salary > 500000 && salary <= 1000000) {
+                tax = 250000 * 0.05 + (salary - 500000) * 0.20;
+            } else {
+                tax = 250000 * 0.05 + 500000 * 0.20 + (salary - 1000000) * 0.30;
+            }
+            return tax;
+        }
+
+        function newSlab(salary) {
+            let tax = 0;
+            if (salary <= 300000) {
+                tax = 0;
+            } else if (salary > 300000 && salary <= 700000) {
+                tax = (salary - 300000) * 0.05;
+            } else if (salary > 700000 && salary <= 1000000) {
+                tax = 400000 * 0.05 + (salary - 700000) * 0.10;
+            } else if (salary > 1000000 && salary <= 1200000) {
+                tax = 400000 * 0.05 + 300000 * 0.10 + (salary - 1000000) * 0.15;
+            } else if (salary > 1200000 && salary <= 1500000) {
+                tax = 400000 * 0.05 + 300000 * 0.10 + 200000 * 0.15 + (salary - 1200000) * 0.20;
+            } else {
+                tax = 400000 * 0.05 + 300000 * 0.10 + 200000 * 0.15 + 300000 * 0.20 + (salary - 1500000) * 0.30;
+            }
+            return tax;
+        }
+
+        function calculate(salOld, salNew, deduction) {
+            const oldSal = salOld - deduction;
+            const oldTax = oldSlab(oldSal);
+            const newTax = newSlab(salNew);
+            return {
+                netTaxableIncomeNew: salNew,
+                netTaxableIncomeOld: salOld - deduction,
+                taxNew: newTax,
+                taxOld: oldTax
+            };
+        }
+
+        function betterCalculate(salOld, salNew) {
+            const oldTax = oldSlab(salOld);
+            const newTax = newSlab(salNew);
+            let breakEven = 0;
+            if (oldTax < newTax) {
+                return "Old regime is better";
+            } else {
+                for (let i = 0; i < 100000000; i += 100) {
+                    const breakTax = oldSlab(salOld - i);
+                    if (breakTax <= newTax) {
+                        breakEven = i;
+                        break;
+                    }
+                }
+                return `New tax is better unless you have deductions of ${breakEven} or more. Taxes in old regime will be ${oldSlab(salOld - breakEven)}`;
+            }
+        }
+    </script>
+</body>
+
+</html>
