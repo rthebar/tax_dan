@@ -11,11 +11,13 @@
             margin: 0;
             padding: 2rem;
             background: #f2f2f2;
+            box-sizing: border-box;
         }
 
         h1 {
             text-align: center;
             color: #333;
+            margin-bottom: 1.5rem;
         }
 
         .container {
@@ -27,16 +29,23 @@
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
         }
 
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
         label {
             font-weight: bold;
+            display: block;
+            margin-bottom: 0.5rem;
         }
 
         input {
             width: 100%;
-            padding: 10px;
-            margin: 0.5rem 0 1rem;
+            padding: 12px;
+            font-size: 16px;
             border: 1px solid #ccc;
             border-radius: 6px;
+            box-sizing: border-box;
         }
 
         .tax-results {
@@ -53,6 +62,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             text-align: center;
+            margin-bottom: 1rem;
         }
 
         .card h2 {
@@ -76,9 +86,32 @@
             font-weight: 500;
         }
 
+        /* Mobile Styles */
         @media (max-width: 600px) {
             .tax-results {
                 flex-direction: column;
+            }
+
+            .card {
+                margin-bottom: 1rem;
+                text-align: left;
+            }
+
+            input {
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            #result {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Tablet Styles */
+        @media (max-width: 900px) {
+            .tax-results {
+                flex-direction: column;
+                gap: 1rem;
             }
         }
     </style>
@@ -87,18 +120,22 @@
 <body>
     <div class="container">
         <h1>Income Tax Regime Comparator</h1>
-        <label for="salary">Salary (₹):</label>
-        <input type="number" id="salary" placeholder="Enter your salary" />
+        <div class="input-group">
+            <label for="salary">Salary (₹):</label>
+            <input type="number" id="salary" placeholder="Enter your salary" />
+        </div>
 
-        <label for="deduction">Deductions (₹):</label>
-        <input type="number" id="deduction" placeholder="Enter deductions under 80C, etc." />
+        <div class="input-group">
+            <label for="deduction">Deductions (₹):</label>
+            <input type="number" id="deduction" placeholder="Enter deductions under 80C, etc." />
+        </div>
 
         <div class="tax-results">
-            <div class="card">
+            <div class="card" id="oldCard">
                 <h2>Old Regime Tax</h2>
                 <p id="oldTax">₹0</p>
             </div>
-            <div class="card">
+            <div class="card" id="newCard">
                 <h2>New Regime Tax</h2>
                 <p id="newTax">₹0</p>
             </div>
@@ -113,6 +150,8 @@
         const oldTaxEl = document.getElementById("oldTax");
         const newTaxEl = document.getElementById("newTax");
         const resultEl = document.getElementById("result");
+        const oldCard = document.getElementById("oldCard");
+        const newCard = document.getElementById("newCard");
 
         function oldSlab(salary) {
             let tax = 0;
@@ -162,11 +201,17 @@
 
             if (sal_new <= tax_free_limit) {
                 resultEl.innerHTML = `<strong>✅ Tax (87A): ₹0</strong>`;
+                resultEl.style.backgroundColor = '#e9f9e8';  // Green background
+                oldCard.style.backgroundColor = "#e9f9e8"; // Green for old regime
+                newCard.style.backgroundColor = "#f8d7da"; // Red for new regime
                 return;
             }
 
             if (excess_income < new_tax) {
                 resultEl.innerHTML = `<strong>✅ Tax after 87A marginal relief: ₹${excess_income}</strong>`;
+                resultEl.style.backgroundColor = '#e9f9e8';  // Green background
+                oldCard.style.backgroundColor = "#f8d7da"; // Red for old regime
+                newCard.style.backgroundColor = "#e9f9e8"; // Green for new regime
                 return;
             }
 
@@ -181,14 +226,21 @@
 
             if (old_tax < new_tax) {
                 resultEl.innerHTML = `<strong>✅ Old Regime is better</strong>`;
+                resultEl.style.backgroundColor = '#e9f9e8';  // Green background
+                oldCard.style.backgroundColor = "#e9f9e8"; // Green for old regime
+                newCard.style.backgroundColor = "#f8d7da"; // Red for new regime
             } else {
                 resultEl.innerHTML = `<strong>✅ New Regime better unless deductions ≥ ₹${break_even}</strong>`;
+                resultEl.style.backgroundColor = '#f8d7da';  // Red background
+                oldCard.style.backgroundColor = "#f8d7da"; // Red for old regime
+                newCard.style.backgroundColor = "#e9f9e8"; // Green for new regime
             }
         }
 
         salaryInput.addEventListener("input", calculate);
         deductionInput.addEventListener("input", calculate);
     </script>
+
 </body>
 
 </html>
